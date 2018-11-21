@@ -33,6 +33,7 @@ SOFTWARE.
 ***********************************************************************/
 
 #include <imageMarlin.hpp>
+#include <algorithm>
 
 #include "imageBlockEC.hpp"
 #include "profiler.hpp"

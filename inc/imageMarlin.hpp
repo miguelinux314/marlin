@@ -38,8 +38,6 @@ SOFTWARE.
 #include <time.h>
 #include <string.h>
 #include <sstream>
-#include <opencv/highgui.h>
-#include <opencv/cv.hpp>
 
 #include <marlin.h>
 
@@ -223,7 +221,7 @@ public:
 	 *
 	 * @return a string with the compressed format bytes
 	 */
-	std::string compress(const cv::Mat& img);
+	std::string compress(uint8_t*  img);
 
 	/**
 	 * Compress an image with the parameters specified in header
@@ -231,7 +229,7 @@ public:
      *
 	 * @return a string with the compressed format bytes
 	 */
-	void compress(const cv::Mat& img, std::ostream& out);
+	void compress(uint8_t* img, std::ostream& out);
 
 protected:
 	// Header with all configuration parameters

@@ -1,5 +1,5 @@
 #include <marlin.h>
-#include <distribution.hpp>
+#include "../src/distribution.hpp"
 #include <sstream>
 
 static  void buildDictionaries(

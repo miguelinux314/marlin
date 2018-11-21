@@ -33,11 +33,10 @@ SOFTWARE.
 #include <regex>
 #include <iostream>
 #include <fstream>
-#include <opencv/highgui.h>
-#include <opencv/cv.hpp>
 #include <unistd.h>
 
 #include "../src/profiler.hpp"
+#include "../src/pgmIO.hpp"
 
 using namespace marlin;
 
@@ -92,8 +91,9 @@ void usage() {
 	std::cout << "\t" << executable_name << " d file.mar file.png" << std::endl;
 	std::cout << "\t" << executable_name << " d file.mar file.pgm" << std::endl;
 	std::cout << std::endl;
-	std::cout << "NOTE: Any input/output format supported by OpenCV can be used " << std::endl
-			  << "for compression/decompression (e.g., .pgm, .png, .bmp)" << std::endl;
+	std::cout << "NOTE: Only 1-component, 8-bit, P5 (binary) PGM files are currently supported "
+	          << std::endl
+	          << "for input/output at compression/decompression in the current version." << std::endl;
 	std::cout << "======================================================================" << std::endl;
 }
 
@@ -247,26 +247,22 @@ int main(int argc, char **argv) {
 	}
 
 	if (mode_compress) {
-		cv::Mat img;
-		{
-			img = cv::imread(input_path, cv::IMREAD_UNCHANGED);
-			if (img.empty()) {
-				usage();
-				std::cerr << "ERROR: Cannot read " << input_path << ". Is it in a supported format?" << std::endl;
-				return -1;
-			}
-		}
+		std::vector<uint8_t> out;
+		size_t width;
+		size_t height;
+		readPGM(input_path, out, width, height);
 
 		ImageMarlinHeader header(
-				(uint32_t) img.rows, (uint32_t) img.cols, (uint32_t) img.channels(),
+				(uint32_t) height, (uint32_t) width, (uint32_t) 1,
 				blockSize, qstep, qtype, rectype, transtype, entropyFrequency);
+
 		if (verbose) {
 			header.show(std::cout);
 		}
 		std::ofstream off(output_path);
 		ImageMarlinCoder* compressor = header.newCoder();
 		Profiler::start("compression");
-		compressor->compress(img, off);
+		compressor->compress(out.data(), off);
 		Profiler::end("compression");
 		delete compressor;
 	} else {
@@ -288,8 +284,8 @@ int main(int argc, char **argv) {
 		decompressor->decompress(compressedData, decompressedData, decompressedHeader);
 		Profiler::end("decompression");
 
-		cv::Mat1b img(decompressedHeader.rows, decompressedHeader.cols, &decompressedData[0]);
-		cv::imwrite(output_path, img);
+		writePGM(decompressedData, output_path, decompressedHeader.cols, decompressedHeader.rows);
+
 		if (verbose) {
 			decompressedHeader.show(std::cout);
 		}

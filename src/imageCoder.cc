@@ -39,35 +39,24 @@ SOFTWARE.
 
 using namespace marlin;
 
-std::string ImageMarlinCoder::compress(const cv::Mat& orig_img) {
+std::string ImageMarlinCoder::compress(uint8_t*  img) {
 	const size_t bs = header.blockWidth;
-	const size_t brows = (orig_img.rows+bs-1)/bs;
-	const size_t bcols = (orig_img.cols+bs-1)/bs;
-	cv::Mat img;
-	{
-		if (brows * bs - orig_img.rows != 0 || bcols * bs - orig_img.cols != 0) {
-			cv::copyMakeBorder(orig_img, img, 0, brows * bs - orig_img.rows, 0, bcols * bs - orig_img.cols,
-			                   cv::BORDER_REPLICATE);
-		} else {
-			img = orig_img;
-		}
+	const size_t brows = (header.rows+bs-1)/bs;
+	const size_t bcols = (header.cols+bs-1)/bs;
+	if (brows * bs - header.rows != 0 || bcols * bs - header.cols != 0) {
+		std::stringstream ss;
+		ss << "In this implementation, width and height must be a multiple of "
+		   << int(bs);
+		throw std::runtime_error(ss.str());
 	}
 
-	std::vector<uint8_t> side_information(bcols*brows*img.channels());
-	std::vector<uint8_t> preprocessed(bcols*brows*bs*bs*img.channels());
+	std::vector<uint8_t> side_information(bcols*brows*header.channels);
+	std::vector<uint8_t> preprocessed(bcols*brows*bs*bs*header.channels);
 
-	if (header.channels != 1) {
-		throw std::runtime_error("Images with more than one component are not yet supported");
-	}
 	// TODO: add support for >1 components
-	cv::Mat1b img1b = img;
-
-	if (! img.isContinuous()) {
-		throw std::runtime_error("This implementation supports only continuous matrix data");
-	}
 
 	Profiler::start("transformation");
-	transformer->transform_direct(img1b.data, side_information, preprocessed);
+	transformer->transform_direct(img, side_information, preprocessed);
 	Profiler::end("transformation");
 
 	// Write configuration header
@@ -86,7 +75,7 @@ std::string ImageMarlinCoder::compress(const cv::Mat& orig_img) {
 	return oss.str();
 }
 
-void ImageMarlinCoder::compress(const cv::Mat& img, std::ostream& out) {
+void ImageMarlinCoder::compress(uint8_t* img, std::ostream& out) {
 	const std::string compressed = compress(img);
 	out.write(compressed.data(), compressed.size());
 }
