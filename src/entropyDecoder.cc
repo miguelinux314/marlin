@@ -33,15 +33,15 @@ SOFTWARE.
 #include <cassert>
 #include <immintrin.h>
 
-
 using namespace marlin;
 
 namespace {
 
+#ifndef NO_BMI2
+
 template<typename TSource, typename MarlinIdx>
 __attribute__ ((target ("bmi2")))
 ssize_t shift8(const TMarlinDecompress<TSource,MarlinIdx> &decompressor, View<const uint8_t> src, View<TSource> dst) {
-	
 	// Decode residuals
 	uint64_t mask=0;
 	for (size_t i=0; i<8; i++)
@@ -55,9 +55,50 @@ ssize_t shift8(const TMarlinDecompress<TSource,MarlinIdx> &decompressor, View<co
 		*o64++ |= _pdep_u64(*reinterpret_cast<const uint64_t *>(i8), mask);
 		i8 += decompressor.shift;
 	}
-	
-	return reinterpret_cast<TSource *>(o64) - dst.start;
+
+	ssize_t ret = reinterpret_cast<TSource *>(o64) - dst.start;
+
+	return ret;
 }
+
+#else
+
+/**
+ * Slow, generic version of the _pdep_* intrinsics
+ */
+template <typename Integral>
+__attribute__((no_sanitize("integer")))
+constexpr Integral deposit_bits(Integral x, Integral mask) {
+  Integral res = 0;
+  for (Integral bb = 1; mask != 0; bb += bb) {
+    if (x & bb) { res |= mask & (-mask); }
+    mask &= (mask - 1);
+  }
+  return res;
+}
+
+template<typename TSource, typename MarlinIdx>
+ssize_t shift8(const TMarlinDecompress<TSource,MarlinIdx> &decompressor, View<const uint8_t> src, View<TSource> dst) {
+	// Decode residuals
+	uint64_t mask=0;
+	for (size_t i=0; i<8; i++)
+		mask |= ((1ULL<<decompressor.shift)-1)<<(8ULL*i);
+
+	const uint8_t *i8 = reinterpret_cast<const uint8_t *>(src.start);
+	uint64_t *o64    = reinterpret_cast<uint64_t *>(dst.start);
+	uint64_t *o64end = reinterpret_cast<uint64_t *>(dst.end);
+
+	while (o64 != o64end) {
+		*o64++ |= deposit_bits<uint64_t>(*reinterpret_cast<const uint64_t *>(i8), mask);
+		i8 += decompressor.shift;
+	}
+
+	ssize_t ret = reinterpret_cast<TSource *>(o64) - dst.start;
+
+	return ret;
+}
+
+#endif
 
 template<typename T, typename TSource, typename MarlinIdx>
 size_t decompress8_skip(

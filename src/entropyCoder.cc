@@ -33,8 +33,6 @@ SOFTWARE.
 #include <immintrin.h>
 #include <cmath>
 
-#include "profiler.hpp"
-
 #define   LIKELY(condition) (__builtin_expect(static_cast<bool>(condition), 1))
 #define UNLIKELY(condition) (__builtin_expect(static_cast<bool>(condition), 0))
 
@@ -42,11 +40,14 @@ using namespace marlin;
 
 namespace {
 
+#ifndef NO_BMI2
 
+/**
+ * Fast residual extraction using the parallel extraction intrinsics from the BMI2 instruction set
+ */
 template<typename TSource, typename MarlinIdx>
 __attribute__ ((target ("bmi2")))
 ssize_t shift8(const TMarlinCompress<TSource,MarlinIdx> &compressor, View<const TSource> src, View<uint8_t> dst) {
-	
 	uint64_t mask=0;
 	for (size_t i=0; i<8; i++)
 		mask |= ((1ULL<<compressor.shift)-1)<<(8ULL*i);
@@ -55,33 +56,148 @@ ssize_t shift8(const TMarlinCompress<TSource,MarlinIdx> &compressor, View<const 
 	const uint64_t *i64end = reinterpret_cast<const uint64_t *>(src.end);
 
 	uint8_t *o8 = dst.start;
-	
 	while (i64 != i64end) {
 		*reinterpret_cast<uint64_t *>(o8) = _pext_u64(*i64++, mask);
 		o8 += compressor.shift;
 	}
-	return o8 - dst.start;
+
+	ssize_t ret = o8 - dst.start;
+
+	return ret;
 }
 
+#else
 
+/**
+ * Slower residual extraction without BMI2 depenencies
+ */
+template<typename TSource, typename MarlinIdx>
+ssize_t shift8(const TMarlinCompress<TSource,MarlinIdx> &compressor, View<const TSource> src, View<uint8_t> dst) {
+	uint64_t mask=0;
+	for (size_t i=0; i<8; i++)
+		mask |= ((1ULL<<compressor.shift)-1)<<(8ULL*i);
+
+	const uint64_t *i64    = reinterpret_cast<const uint64_t *>(src.start);
+	const uint64_t *i64end = reinterpret_cast<const uint64_t *>(src.end);
+
+	uint8_t *o8 = dst.start;
+
+	switch(compressor.shift) {
+		case 0:
+			*o8 = 0;
+			break;
+		case 1:
+			while (i64 != i64end) {
+				const uint64_t dword = *i64;
+				*reinterpret_cast<uint64_t *>(o8) =
+						  (dword & 0x01)
+						 | ((dword & 0x0100) >> (8-1*1))
+						 | ((dword & 0x010000) >> (16-2*1))
+						 | ((dword & 0x01000000) >> (24-3*1))
+						 | ((dword & 0x0100000000) >> (32-4*1))
+						 | ((dword & 0x010000000000) >> (40-5*1))
+						 | ((dword & 0x01000000000000) >> (48-6*1))
+						 | ((dword & 0x0100000000000000) >> (56-7*1));
+				o8 += 1;
+				i64++;
+			}
+			break;
+		case 2:
+			while (i64 != i64end) {
+				const uint64_t dword = *i64;
+				*reinterpret_cast<uint64_t *>(o8) =
+						(dword & 0x03)
+						| ((dword & 0x0300) >> (8-1*2))
+						| ((dword & 0x030000) >> (16-2*2))
+						| ((dword & 0x03000000) >> (24-3*2))
+						| ((dword & 0x0300000000) >> (32-4*2))
+						| ((dword & 0x030000000000) >> (40-5*2))
+						| ((dword & 0x03000000000000) >> (48-6*2))
+						| ((dword & 0x0300000000000000) >> (56-7*2));
+				o8 += 2;
+				i64++;
+			}
+			break;
+		case 3:
+			while (i64 != i64end) {
+				const uint64_t dword = *i64;
+				*reinterpret_cast<uint64_t *>(o8) =
+						(dword & 0x07)
+						| ((dword & 0x0700) >> (8-1*3))
+						| ((dword & 0x070000) >> (16-2*3))
+						| ((dword & 0x07000000) >> (24-3*3))
+						| ((dword & 0x0700000000) >> (32-4*3))
+						| ((dword & 0x070000000000) >> (40-5*3))
+						| ((dword & 0x07000000000000) >> (48-6*3))
+						| ((dword & 0x0700000000000000) >> (56-7*3));
+				o8 += 3;
+				i64++;
+			}
+			break;
+
+		case 4:
+			while (i64 != i64end) {
+				const uint64_t dword = *i64;
+				*reinterpret_cast<uint64_t *>(o8) =
+						(dword & 0x0f)
+						| ((dword & 0x0f00) >> (8-1*4))
+						| ((dword & 0x0f0000) >> (16-2*4))
+						| ((dword & 0x0f000000) >> (24-3*4))
+						| ((dword & 0x0f00000000) >> (32-4*4))
+						| ((dword & 0x0f0000000000) >> (40-5*4))
+						| ((dword & 0x0f000000000000) >> (48-6*4))
+						| ((dword & 0x0f00000000000000) >> (56-7*4));
+				o8 += 4;
+				i64++;
+			}
+			break;
+			
+		case 5:
+			while (i64 != i64end) {
+				const uint64_t dword = *i64;
+				*reinterpret_cast<uint64_t *>(o8) =
+						(dword & 0x1f)
+						| ((dword & 0x1f00) >> (8-1*5))
+						| ((dword & 0x1f0000) >> (16-2*5))
+						| ((dword & 0x1f000000) >> (24-3*5))
+						| ((dword & 0x1f00000000) >> (32-4*5))
+						| ((dword & 0x1f0000000000) >> (40-5*5))
+						| ((dword & 0x1f000000000000) >> (48-6*5))
+						| ((dword & 0x1f00000000000000) >> (56-7*5));
+				o8 += 5;
+				i64++;
+			}
+			break;
+
+		default:
+			std::cerr << "Dictionary shift = " << (int) compressor.shift;
+			throw std::runtime_error("Unsupported dictionary shift");
+	}
+
+	ssize_t ret = o8 - dst.start;
+
+	return ret;
+}
+
+#endif
 
 class JumpTable {
 
 	const size_t alphaStride;  // Bit stride of the jump table corresponding to the word dimension
 	const size_t wordStride;  // Bit stride of the jump table corresponding to the word dimension
 public:
-	
+
 	JumpTable(size_t keySize, size_t overlap, size_t nAlpha) :
 		alphaStride(std::ceil(std::log2(nAlpha))),
 		wordStride(keySize+overlap) {}
-		
+
 	template<typename T>
 	void initTable(std::vector<T> &table) {
 		table = std::vector<T>(((1<<wordStride))*(1<<alphaStride),T(-1));
 	}
-	
+
 	template<typename T, typename T0, typename T1>
-	inline T &operator()(T *table, const T0 &word, const T1 &nextLetter) const { 
+	inline T &operator()(T *table, const T0 &word, const T1 &nextLetter) const {
 		auto v = (word&((1<<wordStride)-1))+(nextLetter<<wordStride);
 //			auto v = ((word&((1<<wordStride)-1))<<alphaStride)+nextLetter;
 		return table[v];
