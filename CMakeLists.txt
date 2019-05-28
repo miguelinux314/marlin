@@ -40,7 +40,6 @@
 
 cmake_minimum_required(VERSION 3.5)
 project(Marlin VERSION 0.01)
-
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -Wcast-qual -Wcast-align -Wstrict-aliasing=1 -Wswitch-enum -Wundef -pedantic -Wfatal-errors -Wshadow")
 
@@ -72,6 +71,14 @@ set_target_properties(imarlin${NAME_TAIL} PROPERTIES
         PUBLIC_HEADER inc/imageMarlin.hpp)
 target_include_directories(imarlin${NAME_TAIL} PRIVATE inc)
 
+# Library of codecs to compare with in the benchmark
+file(GLOB BENCHMARK_FILES ${PROJECT_SOURCE_DIR}/test/codecs/*.cc)
+add_library(libbenchmark ${BENCHMARK_FILES} ${MAIN_SRC_FILES})
+set_target_properties(libbenchmark PROPERTIES
+        VERSION ${PROJECT_VERSION}
+        )
+target_include_directories(libbenchmark PRIVATE ext inc)
+
 ################################
 # Standalone utilities
 option(WITH_UTILS "Build Utilities" ON)
@@ -85,8 +92,9 @@ if(WITH_UTILS)
     endforeach()
 endif()
 
-################################
+#################################
 # Testing binaries
+find_package(OpenCV REQUIRED)
 option(WITH_TESTS "Build Tests" ON)
 if(WITH_TESTS)
     enable_testing()
@@ -96,8 +104,8 @@ if(WITH_TESTS)
     foreach(_test_file ${TEST_SRC_FILES})
         get_filename_component(_test_name ${_test_file} NAME_WE)
         add_executable(${_test_name}${NAME_TAIL} ${_test_file})
-        target_include_directories(${_test_name}${NAME_TAIL} PRIVATE inc utils)
-        target_link_libraries(${_test_name}${NAME_TAIL} marlin${NAME_TAIL})
+        target_include_directories(${_test_name}${NAME_TAIL} PRIVATE inc utils src test)
+        target_link_libraries(${_test_name}${NAME_TAIL} marlin${NAME_TAIL} libbenchmark ${OpenCV_LIBS} -lsnappy -lCharLS -lzstd -llz4 -llzo2 -lpthread -lz ${PROJECT_SOURCE_DIR}/ext/FiniteStateEntropy.a ${PROJECT_SOURCE_DIR}/ext/gipfeli.a)
         add_test(${_test_name}${NAME_TAIL} ${_test_name}${NAME_TAIL})
     endforeach()
 endif()
