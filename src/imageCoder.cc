@@ -54,10 +54,7 @@ std::string ImageMarlinCoder::compress(uint8_t*  img) {
 	std::vector<uint8_t> preprocessed(bcols*brows*bs*bs*header.channels);
 
 	// TODO: add support for >1 components
-
-	Profiler::start("transformation");
 	transformer->transform_direct(img, side_information, preprocessed);
-	Profiler::end("transformation");
 
 	// Write configuration header
 	std::ostringstream oss;
@@ -67,9 +64,7 @@ std::string ImageMarlinCoder::compress(uint8_t*  img) {
 	oss.write((const char *) side_information.data(), side_information.size());
 
 	// Entropy code and write result
-	Profiler::start("entropy_coding");
 	auto compressed = blockEC->encodeBlocks(preprocessed, bs* bs);
-	Profiler::end("entropy_coding");
 	oss.write((const char *)compressed.data(), compressed.size());
 
 	return oss.str();

@@ -1,4 +1,4 @@
-#include "marlin.h"
+#include <marlin.h>
 #include "../src/distribution.hpp"
 #include <iostream>
 

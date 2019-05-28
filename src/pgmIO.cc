@@ -92,12 +92,7 @@ void readPGM(const std::string &input_path, std::vector<uint8_t> &out, size_t &w
 	size_t pos_before = infile.tellg();
 	out.resize(width*height);
 	uint8_t* out_data = out.data();
-	for (size_t r=0; r<height; r++) {
-		for (size_t c=0; c<width; c++) {
-			infile.read((char*) out_data, 1);
-			out_data++;
-		}
-	}
+	infile.read((char*) out_data, width*height);
 	size_t pos_after = infile.tellg();
 	if (pos_after - pos_before != width*height) {
 		std::stringstream ss;

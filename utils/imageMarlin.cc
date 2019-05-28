@@ -250,7 +250,9 @@ int main(int argc, char **argv) {
 		std::vector<uint8_t> out;
 		size_t width;
 		size_t height;
+		Profiler::start("img_reading");
 		readPGM(input_path, out, width, height);
+		Profiler::end("img_reading");
 
 		ImageMarlinHeader header(
 				(uint32_t) height, (uint32_t) width, (uint32_t) 1,
@@ -262,8 +264,12 @@ int main(int argc, char **argv) {
 		std::ofstream off(output_path);
 		ImageMarlinCoder* compressor = header.newCoder();
 		Profiler::start("compression");
-		compressor->compress(out.data(), off);
+		const std::string compressed = compressor->compress(out.data());
 		Profiler::end("compression");
+
+		Profiler::start("img_writing");
+		off.write(compressed.data(), compressed.size());
+		Profiler::end("img_writing");
 		delete compressor;
 	} else {
 		std::string compressedData;

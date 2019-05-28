@@ -112,7 +112,6 @@ void NorthPredictionUniformQuantizer::predict_and_quantize_direct(
 	const size_t imgCols = header.rows;
 	const size_t blocksize = header.blockWidth;
 
-	Profiler::start("quantization");
 	if (qs > 1) {
 		const size_t pixelCount = header.rows * header.cols * header.channels;
 		for (size_t i = 0; i < pixelCount; i++) {
@@ -131,13 +130,11 @@ void NorthPredictionUniformQuantizer::predict_and_quantize_direct(
 			}
 		}
 	}
-	Profiler::end("quantization");
 
 	// PREPROCESS IMAGE INTO BLOCKS
 	uint8_t *t = &preprocessed[0];
 
 	// Pointers to the original data
-	Profiler::start("prediction");
 	const uint8_t* or0;
 	const uint8_t* or1;
 	for (size_t i=0; i<imgRows-blocksize+1; i+=blocksize) {
@@ -171,7 +168,6 @@ void NorthPredictionUniformQuantizer::predict_and_quantize_direct(
 			}
 		}
 	}
-	Profiler::end("prediction");
 }
 
 void NorthPredictionUniformQuantizer::transform_inverse(
@@ -189,7 +185,6 @@ void NorthPredictionUniformQuantizer::transform_inverse(
 	const size_t bs = header.blockWidth;
 	const size_t bcols = (header.cols + bs - 1) / bs;
 
-	Profiler::start("prediction");
 	const uint8_t *t = &entropy_decoded_data[0];
 	uint8_t *r0;
 	uint8_t *r1;
@@ -217,9 +212,7 @@ void NorthPredictionUniformQuantizer::transform_inverse(
 			}
 		}
 	}
-	Profiler::end("prediction");
 
-	Profiler::start("quantization");
 	const size_t pixelCount = header.rows * header.cols * header.channels;
 	const uint32_t interval_count = (256 + header.qstep - 1) / header.qstep;
 	auto size_last_qinterval = (const uint8_t) 256 - header.qstep * (interval_count - 1);
@@ -246,7 +239,6 @@ void NorthPredictionUniformQuantizer::transform_inverse(
 			data[i] = data[i] + offset;
 		}
 	}
-	Profiler::end("quantization");
 }
 
 ///////// Deadzone quantizer
@@ -336,7 +328,6 @@ void NorthPredictionDeadzoneQuantizer::predict_and_quantize_direct(
 	uint8_t *t = &preprocessed[0];
 
 	// Pointers to the original data
-	Profiler::start("prediction+quantization");
 	uint8_t* or0;
 	uint8_t* or1;
 	uint8_t prediction;
@@ -466,7 +457,6 @@ void NorthPredictionDeadzoneQuantizer::predict_and_quantize_direct(
 			}
 		}
 	}
-	Profiler::end("prediction+quantization");
 }
 
 void NorthPredictionDeadzoneQuantizer::transform_inverse(
@@ -493,7 +483,6 @@ void NorthPredictionDeadzoneQuantizer::transform_inverse(
 		throw std::runtime_error("Unsupported reconstruction type");
 	}
 
-	Profiler::start("prediction+quantization");
 	const uint8_t *t = &entropy_decoded_data[0];
 	uint8_t *r0;
 	uint8_t *r1;
@@ -548,7 +537,6 @@ void NorthPredictionDeadzoneQuantizer::transform_inverse(
 			}
 		}
 	}
-	Profiler::end("prediction+quantization");
 }
 
 
@@ -617,7 +605,6 @@ void FastLeftUniformQuantizer::predict_and_quantize_direct(
 	//	const size_t brows = (img.rows+blocksize-1)/blocksize;
 	const size_t pixelCount = header.rows * header.cols * header.channels;
 
-	Profiler::start("quantization");
 	if (qs > 1) {
 		uint8_t* original = original_data;
 		for (size_t i = 0; i < pixelCount; i++) {
@@ -637,20 +624,17 @@ void FastLeftUniformQuantizer::predict_and_quantize_direct(
 			original++;
 		}
 	}
-	Profiler::end("quantization");
 
 	uint8_t previous_value = original_data[0];
 	side_information[0] = original_data[0]; // Only this value is used. TODO: code only the needed SI
 	uint8_t *transformed = &preprocessed[0];
 	uint8_t *original = original_data;
-	Profiler::start("prediction");
 	for (size_t i=0; i<pixelCount; i++) {
 		*transformed = *original - previous_value;
 		previous_value = *original;
 		original++;
 		transformed++;
 	}
-	Profiler::end("prediction");
 }
 
 void FastLeftUniformQuantizer::transform_inverse(
@@ -668,16 +652,13 @@ void FastLeftUniformQuantizer::transform_inverse(
 	uint8_t last_value = side_information[0];
 
 	const size_t pixel_count = header.rows * header.cols * header.channels;
-	Profiler::start("prediction");
 	for (size_t i=0; i<pixel_count; i++) {
 		*reconstructed = *predicted + last_value;
 		last_value = *reconstructed;
 		predicted++;
 		reconstructed++;
 	}
-	Profiler::end("prediction");
 
-	Profiler::start("quantization");
 	const size_t pixelCount = header.rows * header.cols * header.channels;
 	const uint32_t interval_count = (256 + header.qstep - 1) / header.qstep;
 	auto size_last_qinterval = (const uint8_t) 256 - header.qstep * (interval_count - 1);
@@ -704,7 +685,6 @@ void FastLeftUniformQuantizer::transform_inverse(
 			data[i] = data[i] + offset;
 		}
 	}
-	Profiler::end("quantization");
 }
 
 

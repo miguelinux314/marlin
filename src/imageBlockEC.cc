@@ -97,7 +97,6 @@ std::vector<uint8_t> LaplacianBlockEC::encodeBlocks(
 		size_t blockSize) {
 	const size_t nBlocks = (uncompressed.size()+blockSize-1)/blockSize;
 
-	Profiler::start("ec_block_entropy");
 	std::vector<std::pair<uint8_t, size_t>> blocksEntropy;
 	// Calculate entropy only for 1 out of entropy_frequency block
 	double calculated_entropy = 0;
@@ -123,14 +122,12 @@ std::vector<uint8_t> LaplacianBlockEC::encodeBlocks(
 	}
 	// Sort packets depending on increasing entropy
 	std::sort(blocksEntropy.begin(), blocksEntropy.end());
-	Profiler::end("ec_block_entropy");
 
 	// Collect prebuilt dictionaries
 	const Marlin **prebuilt_dictionaries = Marlin_get_prebuilt_dictionaries();
 	prebuilt_dictionaries+=32; // Harcoded, selects Laplacian Distribution
 
 	// Compress
-	Profiler::start("ec_dictionary_coding");
 	std::vector<uint8_t> ec_header(nBlocks*3);
 	std::vector<uint8_t> scratchPad(nBlocks * blockSize);
 	for (size_t b=0; b<nBlocks; b++) {
@@ -148,7 +145,6 @@ std::vector<uint8_t> LaplacianBlockEC::encodeBlocks(
 		ec_header[3*i+1]=compressedSize  & 0xFF;
 		ec_header[3*i+2]=compressedSize >> 8;
 	}
-	Profiler::end("ec_dictionary_coding");
 
 
 	size_t fullCompressedSize = ec_header.size();
