@@ -4,12 +4,12 @@
 #include <string>
 #include <cstring>
 #include <cmath>
-#include <iostream>
+#include <iostream> 
 
-#define UNROLL1(c, sz_, a)  { typeof(sz_) sz = sz_; while(sz>c      + 0U) { sz-= 1; static const int fast = 1; (void)fast; a; }                               while(sz--) { static const int fast = 0; (void)fast; a; } }
-#define UNROLL4(c, sz_, a)  { typeof(sz_) sz = sz_; while(sz>c * 4U + 3U) { sz-= 4; static const int fast = 1; (void)fast; a;a;a;a; }                         while(sz--) { static const int fast = 0; (void)fast; a; } }
-#define UNROLL8(c, sz_, a)  { typeof(sz_) sz = sz_; while(sz>c * 8U + 7U) { sz-= 8; static const int fast = 1; (void)fast; a;a;a;a;a;a;a;a; }                 while(sz--) { static const int fast = 0; (void)fast; a; } }
-#define UNROLL16(c, sz_,a)  { typeof(sz_) sz = sz_; while(sz>c *16U +15U) { sz-=16; static const int fast = 1; (void)fast; a;a;a;a;a;a;a;a;a;a;a;a;a;a;a;a; } while(sz--) { static const int fast = 0; (void)fast; a; } }
+#define UNROLL1(c, sz_, a)  { decltype(sz_) sz = sz_; while(sz>c      + 0U) { sz-= 1; static const int fast = 1; (void)fast; a; }                               while(sz--) { static const int fast = 0; (void)fast; a; } }
+#define UNROLL4(c, sz_, a)  { decltype(sz_) sz = sz_; while(sz>c * 4U + 3U) { sz-= 4; static const int fast = 1; (void)fast; a;a;a;a; }                         while(sz--) { static const int fast = 0; (void)fast; a; } }
+#define UNROLL8(c, sz_, a)  { decltype(sz_) sz = sz_; while(sz>c * 8U + 7U) { sz-= 8; static const int fast = 1; (void)fast; a;a;a;a;a;a;a;a; }                 while(sz--) { static const int fast = 0; (void)fast; a; } }
+#define UNROLL16(c, sz_,a)  { decltype(sz_) sz = sz_; while(sz>c *16U +15U) { sz-=16; static const int fast = 1; (void)fast; a;a;a;a;a;a;a;a;a;a;a;a;a;a;a;a; } while(sz--) { static const int fast = 0; (void)fast; a; } }
 
 //using namespace std;
 

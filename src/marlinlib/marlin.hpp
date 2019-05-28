@@ -869,7 +869,7 @@ namespace MarlinWiP {
 			
 			auto testData = Distribution::getResiduals(pdf, sz);
 			
-			typeof(testData)  compressedData, uncompressedData;
+			decltype(testData)  compressedData, uncompressedData;
 			compressedData  .reserve(8*testData.size());
 			uncompressedData.reserve(8*testData.size());
 
@@ -2005,7 +2005,7 @@ public:
 		
 		auto testData = Distribution::getResiduals(pdf, sz);
 		
-		typeof(testData)  compressedData, uncompressedData;
+		decltype(testData)  compressedData, uncompressedData;
 		compressedData  .reserve(8*testData.size());
 		uncompressedData.reserve(8*testData.size());
 

@@ -1,8 +1,8 @@
-CFLAGS += -std=gnu++17 -Wall -Wextra -Wcast-qual -Wcast-align -Wstrict-aliasing=1 -Wswitch-enum -Wundef -pedantic  -Wfatal-errors -Wshadow
+CXXFLAGS += -std=c++17 -Wall -Wextra -Wcast-qual -Wcast-align -Wstrict-aliasing=1 -Wswitch-enum -Wundef -pedantic  -Wfatal-errors -Wshadow
 
-CFLAGS += -I./src
+CXXFLAGS += -I./src
 
-CFLAGS += `pkg-config opencv --cflags`
+CXXFLAGS += `pkg-config opencv --cflags`
 LFLAGS += `pkg-config opencv --libs`
 
 LFLAGS += -lboost_system -lboost_program_options -lboost_serialization
@@ -11,34 +11,35 @@ LFLAGS += -lz -lrt
 LCODECS += -lsnappy -lCharLS -lzstd -llz4 -llzo2
 
 
-CFLAGS += -fopenmp
+CXXFLAGS += -fopenmp
 LFLAGS += -lgomp
 
-CFLAGS += -Ofast
+CXXFLAGS += -Ofast
 
-CFLAGS += -g
-#CFLAGS += -g -O0
-CFLAGS += -g -Ofast
-CFLAGS += -march=native
+CXXFLAGS += -g
+#CXXFLAGS += -g -O0
+CXXFLAGS += -g -Ofast
+CXXFLAGS += -march=native
 
-CFLAGS += -I./ext
+CXXFLAGS += -I./ext
 LFLAGS += $(wildcard ./ext/*.a)
 
 
-#CFLAGS += -DNDEBUG
-#CFLAGS += -frename-registers -fopenmp
-#CFLAGS += -fno-unroll-loops
-#CFLAGS += -funroll-all-loops
-#CFLAGS += -fno-align-loops
-#CFLAGS += -fno-align-labels
-#CFLAGS += -fno-tree-vectorize
-#CFLAGS += -falign-functions -falign-labels -falign-jumps -falign-loops -frename-registers -finline-functions
-#CFLAGS += -fomit-frame-pointer
-#CFLAGS += -fmerge-all-constants -fmodulo-sched -fmodulo-sched-allow-regmoves -funsafe-loop-optimizations -floop-unroll-and-jam
+#CXXFLAGS += -DNDEBUG
+#CXXFLAGS += -frename-registers -fopenmp
+#CXXFLAGS += -fno-unroll-loops
+#CXXFLAGS += -funroll-all-loops
+#CXXFLAGS += -fno-align-loops
+#CXXFLAGS += -fno-align-labels
+#CXXFLAGS += -fno-tree-vectorize
+#CXXFLAGS += -falign-functions -falign-labels -falign-jumps -falign-loops -frename-registers -finline-functions
+#CXXFLAGS += -fomit-frame-pointer
+#CXXFLAGS += -fmerge-all-constants -fmodulo-sched -fmodulo-sched-allow-regmoves -funsafe-loop-optimizations -floop-unroll-and-jam
 
 CODECS :=  $(patsubst %.cc,%.o,$(wildcard ./src/codecs/*.cc))
 
 
+# CXX = g++-7
 CXX = g++-7
 #CXX = clang++-3.3 -D__extern_always_inline=inline -fslp-vectorize
 #CXX = icpc -fast -auto-ilp32 -xHost -fopenmp
@@ -57,23 +58,23 @@ ext:
 	
 ./src/codecs/marlin2018.o: ./src/codecs/marlin2018.cc ./src/codecs/marlin2018.hpp ./src/util/*.hpp  ./src/marlinlib/marlin.hpp
 	@echo "CREATING $@"
-	@$(CXX) -c -o $@ $< $(CFLAGS)
+	@$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 ./src/codecs/marlinWiP.o: ./src/codecs/marlinWiP.cc ./src/codecs/marlinWiP.hpp ./src/util/*.hpp  ./src/marlinlib/marlin.hpp
 	@echo "CREATING $@"
-	@$(CXX) -c -o $@ $< $(CFLAGS)
+	@$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 ./src/codecs/%.o: ./src/codecs/%.cc ./src/codecs/%.hpp ./src/util/*.hpp
 	@echo "CREATING $@"
-	@$(CXX) -c -o $@ $< $(CFLAGS)
+	@$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 ./bin/benchmark: ./src/benchmark.cc $(CODECS) ext
 	@echo "CREATING $@" $(CODECS) ext
-	@$(CXX) -o $@ $< $(CODECS) $(LCODECS) $(CFLAGS) $(LFLAGS)
+	@$(CXX) -o $@ $< $(CODECS) $(LCODECS) $(CXXFLAGS) $(LFLAGS)
 
 ./bin/%: ./src/%.cc ext
 	@echo "CREATING $@" ext
-	@$(CXX) -o $@ $< $(CFLAGS) $(LFLAGS)
+	@$(CXX) -o $@ $< $(CXXFLAGS) $(LFLAGS)
 
 prof: ./bin/dcc2017
 	 valgrind --dsymutil=yes --cache-sim=yes --branch-sim=yes --dump-instr=yes --trace-jump=no --tool=callgrind --callgrind-out-file=callgrind.out ./eval 
