@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(Marlin VERSION 0.01)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -Wcast-qual -Wcast-align -Wstrict-aliasing=1 -Wswitch-enum -Wundef -pedantic -Wfatal-errors -Wshadow")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -Wcast-qual -Wcast-align -Wstrict-aliasing=1 -Wswitch-enum -Wundef -pedantic -Wfatal-errors -Wshadow -I/usr/include/opencv4")
 
 ################################
 # Marlin library (entropy codec only)
@@ -53,7 +53,7 @@ if(WITH_TESTS)
         get_filename_component(_test_name ${_test_file} NAME_WE)
         add_executable(${_test_name} ${_test_file})
         target_include_directories(${_test_name} PRIVATE inc utils)
-        target_link_libraries(${_test_name} marlin)
+        target_link_libraries(${_test_name} marlin )
         add_test(${_test_name} ${_test_name})
     endforeach()
 endif()

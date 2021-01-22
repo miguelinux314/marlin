@@ -1,5 +1,7 @@
 # Marlin: a high throughput entropy compressor
 
+Fixed to work with Ubuntu 20.04 LTS
+
 #### Update: Precomputed Dictionaries
 
 We added the (limited) ability to precompute dictionaries.

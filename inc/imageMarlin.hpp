@@ -38,8 +38,7 @@ SOFTWARE.
 #include <time.h>
 #include <string.h>
 #include <sstream>
-#include <opencv/highgui.h>
-#include <opencv/cv.hpp>
+#include "/usr/include/opencv4/opencv2/opencv.hpp"
 
 #include <marlin.h>
 

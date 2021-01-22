@@ -4,8 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <opencv/highgui.h>
-#include <opencv/cv.hpp>
+#include <opencv2/opencv.hpp>
 
 
 struct TestTimer {
